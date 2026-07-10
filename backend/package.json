@@ -1,0 +1,23 @@
+{
+  "name": "smart-matatu-backend",
+  "version": "1.0.0",
+  "description": "Express API for Smart Matatu system",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "check:db": "node scripts/check-db.js",
+    "setup:db": "node scripts/setup-db.js"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.108.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "pg": "^8.21.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
