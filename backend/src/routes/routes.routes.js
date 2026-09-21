@@ -1,39 +1,86 @@
 const express = require('express')
 const { supabaseAdmin } = require('../config/supabase')
 const { authenticate, loadProfile, requireRole } = require('../middleware/auth')
+const cache = require('../lib/cache')
 
 const router = express.Router()
+const ROUTES_TTL = 60_000
+
+function bustRouteCaches(routeId) {
+  cache.del('routes:')
+  if (routeId) {
+    cache.del(`stages:${routeId}`)
+    cache.del(`fares:${routeId}`)
+  }
+}
 
 router.get('/', authenticate, loadProfile, async (req, res) => {
-  let query = supabaseAdmin.from('routes').select('*, saccos(name)').eq('is_active', true)
+  const cacheKey =
+    req.profile.role === 'admin'
+      ? `routes:admin:${req.profile.sacco_id}`
+      : 'routes:active'
+
+  const cached = cache.get(cacheKey)
+  if (cached) {
+    res.set('Cache-Control', 'private, max-age=30')
+    return res.json(cached)
+  }
+
+  let query = supabaseAdmin
+    .from('routes')
+    .select('id, name, description, sacco_id, is_active, saccos(name)')
+    .eq('is_active', true)
 
   if (req.profile.role === 'admin') {
-    query = supabaseAdmin.from('routes').select('*, saccos(name)').eq('sacco_id', req.profile.sacco_id)
+    query = supabaseAdmin
+      .from('routes')
+      .select('id, name, description, sacco_id, is_active, saccos(name)')
+      .eq('sacco_id', req.profile.sacco_id)
   }
 
   const { data, error } = await query
   if (error) return res.status(400).json({ error: error.message })
+  cache.set(cacheKey, data, ROUTES_TTL)
+  res.set('Cache-Control', 'private, max-age=30')
   res.json(data)
 })
 
 router.get('/:id/stages', authenticate, loadProfile, async (req, res) => {
+  const cacheKey = `stages:${req.params.id}`
+  const cached = cache.get(cacheKey)
+  if (cached) {
+    res.set('Cache-Control', 'private, max-age=30')
+    return res.json(cached)
+  }
+
   const { data, error } = await supabaseAdmin
     .from('route_stages')
-    .select('*')
+    .select('id, route_id, name, order_index, latitude, longitude')
     .eq('route_id', req.params.id)
     .order('order_index')
 
   if (error) return res.status(400).json({ error: error.message })
+  cache.set(cacheKey, data, ROUTES_TTL)
+  res.set('Cache-Control', 'private, max-age=30')
   res.json(data)
 })
 
 router.get('/:id/fares', authenticate, loadProfile, async (req, res) => {
+  const cacheKey = `fares:${req.params.id}`
+  const cached = cache.get(cacheKey)
+  if (cached) {
+    res.set('Cache-Control', 'private, max-age=30')
+    return res.json(cached)
+  }
+
   const { data, error } = await supabaseAdmin
     .from('stage_fares')
-    .select('*, from_stage:from_stage_id(name), to_stage:to_stage_id(name)')
+    .select('id, route_id, fare_amount, from_stage_id, to_stage_id, from_stage:from_stage_id(name), to_stage:to_stage_id(name)')
     .eq('route_id', req.params.id)
 
   if (error) return res.status(400).json({ error: error.message })
+  cache.set(cacheKey, data, ROUTES_TTL)
+  res.set('Cache-Control', 'private, max-age=30')
   res.json(data)
 })
 
@@ -46,6 +93,7 @@ router.post('/', authenticate, loadProfile, requireRole('admin'), async (req, re
     .single()
 
   if (error) return res.status(400).json({ error: error.message })
+  bustRouteCaches(data?.id)
   res.status(201).json(data)
 })
 
@@ -64,6 +112,7 @@ router.post('/:id/stages', authenticate, loadProfile, requireRole('admin'), asyn
     .single()
 
   if (error) return res.status(400).json({ error: error.message })
+  bustRouteCaches(req.params.id)
   res.status(201).json(data)
 })
 
@@ -81,6 +130,7 @@ router.post('/:id/fares', authenticate, loadProfile, requireRole('admin'), async
     .single()
 
   if (error) return res.status(400).json({ error: error.message })
+  bustRouteCaches(req.params.id)
   res.status(201).json(data)
 })
 
@@ -111,6 +161,7 @@ router.patch('/:id', authenticate, loadProfile, requireRole('admin'), async (req
       .select()
       .single()
     if (error) return res.status(400).json({ error: error.message })
+    bustRouteCaches(req.params.id)
     res.json(data)
   } catch (err) {
     return res.status(400).json({ error: err.message })
@@ -125,6 +176,7 @@ router.delete('/:id', authenticate, loadProfile, requireRole('admin'), async (re
       .update({ is_active: false })
       .eq('id', req.params.id)
     if (error) return res.status(400).json({ error: error.message })
+    bustRouteCaches(req.params.id)
     res.json({ success: true })
   } catch (err) {
     return res.status(400).json({ error: err.message })
@@ -155,6 +207,7 @@ router.patch('/stages/:stageId', authenticate, loadProfile, requireRole('admin')
       .select()
       .single()
     if (error) return res.status(400).json({ error: error.message })
+    bustRouteCaches(stage.route_id)
     res.json(data)
   } catch (err) {
     return res.status(400).json({ error: err.message })
@@ -173,6 +226,7 @@ router.delete('/stages/:stageId', authenticate, loadProfile, requireRole('admin'
     await assertAdminRoute(req, stage.route_id)
     const { error } = await supabaseAdmin.from('route_stages').delete().eq('id', req.params.stageId)
     if (error) return res.status(400).json({ error: error.message })
+    bustRouteCaches(stage.route_id)
     res.json({ success: true })
   } catch (err) {
     return res.status(400).json({ error: err.message })
@@ -202,6 +256,7 @@ router.patch('/fares/:fareId', authenticate, loadProfile, requireRole('admin'), 
       .select('*, from_stage:from_stage_id(name), to_stage:to_stage_id(name)')
       .single()
     if (error) return res.status(400).json({ error: error.message })
+    bustRouteCaches(fare.route_id)
     res.json(data)
   } catch (err) {
     return res.status(400).json({ error: err.message })
@@ -220,6 +275,7 @@ router.delete('/fares/:fareId', authenticate, loadProfile, requireRole('admin'),
     await assertAdminRoute(req, fare.route_id)
     const { error } = await supabaseAdmin.from('stage_fares').delete().eq('id', req.params.fareId)
     if (error) return res.status(400).json({ error: error.message })
+    bustRouteCaches(fare.route_id)
     res.json({ success: true })
   } catch (err) {
     return res.status(400).json({ error: err.message })

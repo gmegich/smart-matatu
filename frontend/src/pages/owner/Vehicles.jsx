@@ -20,7 +20,7 @@ export default function OwnerVehicles() {
   return (
     <Layout title="Magari Yangu / My Vehicles">
       {loading ? (
-        <p className="text-gray-500">Inapakia...</p>
+        <p className="text-gray-500">Inapakia / Loading...</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {vehicles.map((v) => (
@@ -31,11 +31,11 @@ export default function OwnerVehicles() {
               <p className="mt-2 text-sm">Capacity: {v.capacity} seats</p>
               <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                 <div className="rounded-lg bg-green-50 p-2">
-                  <p className="text-gray-500">Mapato</p>
+                  <p className="text-gray-500">Mapato / Earnings</p>
                   <p className="font-semibold text-green-800">{formatCurrency(v.earnings)}</p>
                 </div>
                 <div className="rounded-lg bg-blue-50 p-2">
-                  <p className="text-gray-500">Safari</p>
+                  <p className="text-gray-500">Safari / Trips</p>
                   <p className="font-semibold text-blue-800">{v.tripCount}</p>
                 </div>
               </div>
@@ -58,7 +58,7 @@ export default function OwnerVehicles() {
             </div>
           ))}
           {vehicles.length === 0 && (
-            <p className="text-gray-500">Huna magari yaliyosajiliwa bado.</p>
+            <p className="text-gray-500">Huna magari yaliyosajiliwa bado / No vehicles registered yet.</p>
           )}
         </div>
       )}

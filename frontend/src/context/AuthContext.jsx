@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import {
   registerUser,
@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const initDone = useRef(false)
 
-  const clearAuth = () => {
+  const clearAuth = useCallback(() => {
     clearStoredSession()
     try {
       supabase.auth.signOut({ scope: 'local' })
@@ -32,9 +32,9 @@ export function AuthProvider({ children }) {
     }
     setUser(null)
     setProfile(null)
-  }
+  }, [])
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!getStoredToken()) {
       setProfile(null)
       return null
@@ -59,13 +59,13 @@ export function AuthProvider({ children }) {
         return null
       }
     }
-  }
+  }, [clearAuth])
 
-  const repairUserProfile = async () => {
+  const repairUserProfile = useCallback(async () => {
     const data = await repairProfile()
     setProfile(data)
     return data
-  }
+  }, [])
 
   useEffect(() => {
     if (initDone.current) return
@@ -97,9 +97,9 @@ export function AuthProvider({ children }) {
     }
 
     init()
-  }, [])
+  }, [fetchProfile])
 
-  const signUp = async (email, password, fullName, role = 'passenger', phone = '') => {
+  const signUp = useCallback(async (email, password, fullName, role = 'passenger', phone = '') => {
     try {
       const data = await registerUser(email, password, fullName, role, phone)
       const u = data.session?.user || data.user
@@ -111,9 +111,9 @@ export function AuthProvider({ children }) {
       const message = getApiErrorMessage(err)
       return { data: null, error: { message } }
     }
-  }
+  }, [fetchProfile])
 
-  const signIn = async (email, password) => {
+  const signIn = useCallback(async (email, password) => {
     try {
       const data = await loginUser(email, password)
       setUser(data.user)
@@ -123,19 +123,18 @@ export function AuthProvider({ children }) {
       const message = getApiErrorMessage(err)
       return { data: null, error: { message } }
     }
-  }
+  }, [])
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     clearAuth()
-  }
+  }, [clearAuth])
 
-  const refreshProfile = () => fetchProfile()
+  const refreshProfile = useCallback(() => fetchProfile(), [fetchProfile])
 
-  return (
-    <AuthContext.Provider
-      value={{ user, profile, loading, signUp, signIn, signOut, refreshProfile, repairUserProfile }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({ user, profile, loading, signUp, signIn, signOut, refreshProfile, repairUserProfile }),
+    [user, profile, loading, signUp, signIn, signOut, refreshProfile, repairUserProfile]
   )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import PasswordInput from '../../components/PasswordInput'
+import AuthLayout from '../../components/AuthLayout'
 import { supabase } from '../../lib/supabase'
 import { resetPassword, getApiErrorMessage, storeSession } from '../../lib/api'
 
@@ -80,56 +81,42 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-700 via-green-800 to-red-800 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
-        <div className="mb-6 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl">
-            🔒
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Weka Nenosiri Jipya</h1>
-          <p className="text-sm text-gray-500">Set a new password</p>
+    <AuthLayout title="Weka nenosiri jipya / Set new password" subtitle="Set a new password for your account">
+      {checking ? (
+        <p className="text-center text-sm text-slate-500">Inathibitisha kiungo... / Verifying link...</p>
+      ) : !ready ? (
+        <div className="space-y-4 text-center">
+          <div className="alert-error text-left">{error}</div>
+          <Link to="/forgot-password" className="font-semibold text-emerald-600 hover:underline">
+            Omba kiungo kipya / Request new link
+          </Link>
         </div>
-
-        {checking ? (
-          <p className="text-center text-sm text-gray-500">Inathibitisha kiungo... / Verifying link...</p>
-        ) : !ready ? (
-          <div className="space-y-4 text-center">
-            <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700">{error}</div>
-            <Link to="/forgot-password" className="font-semibold text-green-600 hover:underline">
-              Omba kiungo kipya / Request new link
-            </Link>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && <div className="alert-error">{error}</div>}
+          <div>
+            <label className="label-field">New Password</label>
+            <PasswordInput
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">New Password</label>
-              <PasswordInput
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Confirm Password</label>
-              <PasswordInput
-                required
-                minLength={6}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-green-600 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
-            >
-              {loading ? 'Inahifadhi...' : 'Hifadhi nenosiri / Save password'}
-            </button>
-          </form>
-        )}
-      </div>
-    </div>
+          <div>
+            <label className="label-field">Confirm Password</label>
+            <PasswordInput
+              required
+              minLength={6}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
+          <button type="submit" disabled={loading} className="btn-primary w-full py-3">
+            {loading ? 'Inahifadhi / Saving...' : 'Hifadhi nenosiri / Save password'}
+          </button>
+        </form>
+      )}
+    </AuthLayout>
   )
 }

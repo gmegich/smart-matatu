@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
+const compression = require('compression')
 
 const authRoutes = require('./routes/auth.routes')
 const profileRoutes = require('./routes/profile.routes')
@@ -35,6 +36,7 @@ function isAllowedOrigin(origin) {
   return false
 }
 
+app.use(compression())
 app.use(cors({
   origin(origin, callback) {
     if (isAllowedOrigin(origin)) return callback(null, true)
@@ -42,7 +44,7 @@ app.use(cors({
   },
   credentials: true,
 }))
-app.use(express.json())
+app.use(express.json({ limit: '256kb' }))
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'Smart Matatu API' })

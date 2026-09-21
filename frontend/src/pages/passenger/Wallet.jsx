@@ -88,13 +88,13 @@ export default function PassengerWallet() {
         </div>
         {profile?.phone && (
           <div className="mt-3">
-            <PhoneContact name={profile.full_name} phone={profile.phone} label="Simu yako" />
+            <PhoneContact name={profile.full_name} phone={profile.phone} label="Simu yako / Your phone" />
           </div>
         )}
       </div>
 
       <div className="mb-8 rounded-xl border bg-white p-6 shadow-sm">
-        <h3 className="mb-3 font-semibold">Ongeza Salio (Simulated)</h3>
+        <h3 className="mb-3 font-semibold">Ongeza Salio / Top Up (Simulated)</h3>
         <div className="flex gap-3">
           <input
             type="number"
@@ -108,7 +108,7 @@ export default function PassengerWallet() {
             onClick={handleSelfTopup}
             className="rounded-lg bg-green-600 px-6 py-2.5 font-semibold text-white hover:bg-green-700"
           >
-            Ongeza
+            Ongeza / Top Up
           </button>
         </div>
         {message && (
@@ -119,7 +119,7 @@ export default function PassengerWallet() {
       </div>
 
       <div className="rounded-xl border bg-white shadow-sm">
-        <h3 className="border-b p-4 font-semibold">Historia ya Miamala</h3>
+        <h3 className="border-b p-4 font-semibold">Historia ya Miamala / Transaction History</h3>
         <div className="divide-y">
           {transactions.map((tx) => (
             <div key={tx.id} className="flex items-center justify-between p-4">

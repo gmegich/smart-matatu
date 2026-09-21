@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -8,36 +9,37 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import ResetPassword from './pages/auth/ResetPassword'
+import ScanAccess from './pages/auth/ScanAccess'
 
-import PassengerDashboard from './pages/passenger/Dashboard'
-import PassengerRoutes from './pages/passenger/Routes'
-import PayFare from './pages/passenger/PayFare'
-import TrackMatatu from './pages/passenger/TrackMatatu'
-import PassengerWallet from './pages/passenger/Wallet'
-import TripHistory from './pages/passenger/TripHistory'
-import CompleteTrip from './pages/passenger/CompleteTrip'
+const PassengerDashboard = lazy(() => import('./pages/passenger/Dashboard'))
+const PassengerRoutes = lazy(() => import('./pages/passenger/Routes'))
+const PayFare = lazy(() => import('./pages/passenger/PayFare'))
+const TrackMatatu = lazy(() => import('./pages/passenger/TrackMatatu'))
+const PassengerWallet = lazy(() => import('./pages/passenger/Wallet'))
+const TripHistory = lazy(() => import('./pages/passenger/TripHistory'))
+const CompleteTrip = lazy(() => import('./pages/passenger/CompleteTrip'))
 
-import DriverDashboard from './pages/driver/Dashboard'
-import DriverTrips from './pages/driver/Trips'
-import VerifyPayment from './pages/driver/VerifyPayment'
-import DriverRoutes from './pages/driver/DriverRoutes'
-import DriverTrack from './pages/driver/Track'
+const DriverDashboard = lazy(() => import('./pages/driver/Dashboard'))
+const DriverTrips = lazy(() => import('./pages/driver/Trips'))
+const VerifyPayment = lazy(() => import('./pages/driver/VerifyPayment'))
+const DriverRoutes = lazy(() => import('./pages/driver/DriverRoutes'))
+const DriverTrack = lazy(() => import('./pages/driver/Track'))
 
-import AdminDashboard from './pages/admin/Dashboard'
-import AdminUsers from './pages/admin/Users'
-import AdminVehicles from './pages/admin/Vehicles'
-import AdminRoutes from './pages/admin/Routes'
-import AdminWallets from './pages/admin/Wallets'
-import AdminTrips from './pages/admin/Trips'
-import AdminLiveMap from './pages/admin/LiveMap'
-import AdminReports from './pages/admin/Reports'
-import AdminFeedback from './pages/admin/Feedback'
-import AdminSettings from './pages/admin/Settings'
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'))
+const AdminUsers = lazy(() => import('./pages/admin/Users'))
+const AdminVehicles = lazy(() => import('./pages/admin/Vehicles'))
+const AdminRoutes = lazy(() => import('./pages/admin/Routes'))
+const AdminWallets = lazy(() => import('./pages/admin/Wallets'))
+const AdminTrips = lazy(() => import('./pages/admin/Trips'))
+const AdminLiveMap = lazy(() => import('./pages/admin/LiveMap'))
+const AdminReports = lazy(() => import('./pages/admin/Reports'))
+const AdminFeedback = lazy(() => import('./pages/admin/Feedback'))
+const AdminSettings = lazy(() => import('./pages/admin/Settings'))
 
-import OwnerDashboard from './pages/owner/Dashboard'
-import OwnerVehicles from './pages/owner/Vehicles'
-import OwnerEarnings from './pages/owner/Earnings'
-import OwnerTrack from './pages/owner/Track'
+const OwnerDashboard = lazy(() => import('./pages/owner/Dashboard'))
+const OwnerVehicles = lazy(() => import('./pages/owner/Vehicles'))
+const OwnerEarnings = lazy(() => import('./pages/owner/Earnings'))
+const OwnerTrack = lazy(() => import('./pages/owner/Track'))
 
 function RoleRedirect() {
   const { user, profile, loading } = useAuth()
@@ -53,6 +55,20 @@ function RoleRedirect() {
   return <Navigate to={routes[profile?.role] || '/login'} replace />
 }
 
+function LazyPage({ children }) {
+  return <Suspense fallback={<Loading message="Inapakia / Loading..." />}>{children}</Suspense>
+}
+
+function guard(roles, Page) {
+  return (
+    <ProtectedRoute allowedRoles={roles}>
+      <LazyPage>
+        <Page />
+      </LazyPage>
+    </ProtectedRoute>
+  )
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -62,37 +78,38 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/scan" element={<ScanAccess />} />
           <Route path="/" element={<RoleRedirect />} />
 
-          <Route path="/passenger" element={<ProtectedRoute allowedRoles={['passenger']}><PassengerDashboard /></ProtectedRoute>} />
-          <Route path="/passenger/routes" element={<ProtectedRoute allowedRoles={['passenger']}><PassengerRoutes /></ProtectedRoute>} />
-          <Route path="/passenger/pay" element={<ProtectedRoute allowedRoles={['passenger']}><PayFare /></ProtectedRoute>} />
-          <Route path="/passenger/track" element={<ProtectedRoute allowedRoles={['passenger']}><TrackMatatu /></ProtectedRoute>} />
-          <Route path="/passenger/complete-trip" element={<ProtectedRoute allowedRoles={['passenger']}><CompleteTrip /></ProtectedRoute>} />
-          <Route path="/passenger/wallet" element={<ProtectedRoute allowedRoles={['passenger']}><PassengerWallet /></ProtectedRoute>} />
-          <Route path="/passenger/history" element={<ProtectedRoute allowedRoles={['passenger']}><TripHistory /></ProtectedRoute>} />
+          <Route path="/passenger" element={guard(['passenger'], PassengerDashboard)} />
+          <Route path="/passenger/routes" element={guard(['passenger'], PassengerRoutes)} />
+          <Route path="/passenger/pay" element={guard(['passenger'], PayFare)} />
+          <Route path="/passenger/track" element={guard(['passenger'], TrackMatatu)} />
+          <Route path="/passenger/complete-trip" element={guard(['passenger'], CompleteTrip)} />
+          <Route path="/passenger/wallet" element={guard(['passenger'], PassengerWallet)} />
+          <Route path="/passenger/history" element={guard(['passenger'], TripHistory)} />
 
-          <Route path="/driver" element={<ProtectedRoute allowedRoles={['driver']}><DriverDashboard /></ProtectedRoute>} />
-          <Route path="/driver/trips" element={<ProtectedRoute allowedRoles={['driver']}><DriverTrips /></ProtectedRoute>} />
-          <Route path="/driver/verify" element={<ProtectedRoute allowedRoles={['driver']}><VerifyPayment /></ProtectedRoute>} />
-          <Route path="/driver/routes" element={<ProtectedRoute allowedRoles={['driver']}><DriverRoutes /></ProtectedRoute>} />
-          <Route path="/driver/track" element={<ProtectedRoute allowedRoles={['driver']}><DriverTrack /></ProtectedRoute>} />
+          <Route path="/driver" element={guard(['driver'], DriverDashboard)} />
+          <Route path="/driver/trips" element={guard(['driver'], DriverTrips)} />
+          <Route path="/driver/verify" element={guard(['driver'], VerifyPayment)} />
+          <Route path="/driver/routes" element={guard(['driver'], DriverRoutes)} />
+          <Route path="/driver/track" element={guard(['driver'], DriverTrack)} />
 
-          <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}><AdminUsers /></ProtectedRoute>} />
-          <Route path="/admin/vehicles" element={<ProtectedRoute allowedRoles={['admin']}><AdminVehicles /></ProtectedRoute>} />
-          <Route path="/admin/routes" element={<ProtectedRoute allowedRoles={['admin']}><AdminRoutes /></ProtectedRoute>} />
-          <Route path="/admin/wallets" element={<ProtectedRoute allowedRoles={['admin']}><AdminWallets /></ProtectedRoute>} />
-          <Route path="/admin/trips" element={<ProtectedRoute allowedRoles={['admin']}><AdminTrips /></ProtectedRoute>} />
-          <Route path="/admin/live-map" element={<ProtectedRoute allowedRoles={['admin']}><AdminLiveMap /></ProtectedRoute>} />
-          <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminReports /></ProtectedRoute>} />
-          <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={['admin']}><AdminFeedback /></ProtectedRoute>} />
-          <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AdminSettings /></ProtectedRoute>} />
+          <Route path="/admin" element={guard(['admin'], AdminDashboard)} />
+          <Route path="/admin/users" element={guard(['admin'], AdminUsers)} />
+          <Route path="/admin/vehicles" element={guard(['admin'], AdminVehicles)} />
+          <Route path="/admin/routes" element={guard(['admin'], AdminRoutes)} />
+          <Route path="/admin/wallets" element={guard(['admin'], AdminWallets)} />
+          <Route path="/admin/trips" element={guard(['admin'], AdminTrips)} />
+          <Route path="/admin/live-map" element={guard(['admin'], AdminLiveMap)} />
+          <Route path="/admin/reports" element={guard(['admin'], AdminReports)} />
+          <Route path="/admin/feedback" element={guard(['admin'], AdminFeedback)} />
+          <Route path="/admin/settings" element={guard(['admin'], AdminSettings)} />
 
-          <Route path="/owner" element={<ProtectedRoute allowedRoles={['owner']}><OwnerDashboard /></ProtectedRoute>} />
-          <Route path="/owner/vehicles" element={<ProtectedRoute allowedRoles={['owner']}><OwnerVehicles /></ProtectedRoute>} />
-          <Route path="/owner/earnings" element={<ProtectedRoute allowedRoles={['owner']}><OwnerEarnings /></ProtectedRoute>} />
-          <Route path="/owner/track" element={<ProtectedRoute allowedRoles={['owner']}><OwnerTrack /></ProtectedRoute>} />
+          <Route path="/owner" element={guard(['owner'], OwnerDashboard)} />
+          <Route path="/owner/vehicles" element={guard(['owner'], OwnerVehicles)} />
+          <Route path="/owner/earnings" element={guard(['owner'], OwnerEarnings)} />
+          <Route path="/owner/track" element={guard(['owner'], OwnerTrack)} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

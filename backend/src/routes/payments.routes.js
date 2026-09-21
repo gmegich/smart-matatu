@@ -129,7 +129,7 @@ async function listPassengerPayments(profile, userId, passengerOnly = false) {
     } else if (profile.role === 'admin') {
       q = q.eq('sacco_id', profile.sacco_id)
     }
-    return q.order('created_at', { ascending: false })
+    return q.order('created_at', { ascending: false }).limit(100)
   }
 
   let { data, error } = await buildQuery(`${baseSelect}, trip_ratings(rating, comment, created_at)`)

@@ -52,15 +52,15 @@ export default function AdminReports() {
   return (
     <Layout title="Ripoti / Reports">
       <div className="grid gap-4 sm:grid-cols-4 mb-8">
-        <StatCard title="Jumla Mapato" value={formatCurrency(summary.total)} color="green" />
-        <StatCard title="Malipo Yaliyothibitishwa" value={summary.verified || 0} color="blue" />
-        <StatCard title="Inasubiri" value={summary.pending || 0} color="yellow" />
-        <StatCard title="Wastani/Nauli" value={formatCurrency(summary.avg)} color="red" />
+        <StatCard title="Jumla Mapato / Total Revenue" value={formatCurrency(summary.total)} color="green" />
+        <StatCard title="Malipo Yaliyothibitishwa / Verified" value={summary.verified || 0} color="blue" />
+        <StatCard title="Inasubiri / Pending" value={summary.pending || 0} color="yellow" />
+        <StatCard title="Wastani wa Nauli / Avg Fare" value={formatCurrency(summary.avg)} color="red" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border bg-white p-6 shadow-sm">
-          <h3 className="mb-4 font-semibold">Mgawanyo wa Mapato kwa Njia</h3>
+          <h3 className="mb-4 font-semibold">Mgawanyo wa Mapato kwa Njia / Revenue by Route</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
@@ -75,7 +75,7 @@ export default function AdminReports() {
         </div>
 
         <div className="rounded-xl border bg-white shadow-sm max-h-96 overflow-y-auto">
-          <h3 className="border-b p-4 font-semibold">Malipo Yaliyothibitishwa</h3>
+          <h3 className="border-b p-4 font-semibold">Malipo Yaliyothibitishwa / Verified Payments</h3>
           <div className="divide-y">
             {payments.slice(0, 20).map((p) => (
               <div key={p.id} className="flex justify-between p-4 text-sm">

@@ -40,19 +40,19 @@ export default function AdminLiveMap() {
   return (
     <Layout title="Ramani Hai / Live Fleet Map">
       <p className="mb-4 text-sm text-gray-600">
-        Fuatilia matatu zote zenye safari hai katika SACCO yako — eneo linasasishwa moja kwa moja.
+        Fuatilia matatu zote zenye safari hai katika SACCO yako / Track all active matatus in your SACCO — eneo linasasishwa moja kwa moja / live updates.
       </p>
 
       <LiveMapBadge lastSync={lastSync} count={locations.length} />
 
       {loading && locations.length === 0 ? (
-        <p className="mb-4 text-gray-500">Inapakia ramani...</p>
+        <p className="mb-4 text-gray-500">Inapakia ramani / Loading map...</p>
       ) : (
         <MapView vehicles={locations} autoFit zoom={12} />
       )}
 
       {activeTrips.length === 0 && !loading && (
-        <p className="mt-4 text-sm text-gray-500">Hakuna safari hai sasa — ramani itaonyesha matatu zinapoanza safari.</p>
+        <p className="mt-4 text-sm text-gray-500">Hakuna safari hai sasa / No active trips — ramani itaonyesha matatu zinapoanza safari.</p>
       )}
 
       {activeTrips.length > 0 && (
@@ -62,8 +62,8 @@ export default function AdminLiveMap() {
             <thead className="border-b bg-gray-50">
               <tr>
                 <th className="p-4">Matatu</th>
-                <th className="p-4">Dereva</th>
-                <th className="p-4">Njia</th>
+                <th className="p-4">Dereva / Driver</th>
+                <th className="p-4">Njia / Route</th>
                 <th className="p-4">GPS</th>
               </tr>
             </thead>

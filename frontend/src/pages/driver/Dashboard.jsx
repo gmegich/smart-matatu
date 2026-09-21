@@ -61,28 +61,28 @@ export default function DriverDashboard() {
     <Layout title={`Dereva / Driver — ${profile?.full_name}`}>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Imekusanywa Leo"
+          title="Imekusanywa Leo / Collected Today"
           value={formatCurrency(collections?.today_total)}
           subtitle={`${collections?.today_count || 0} verified payments`}
           icon="💰"
           color="green"
         />
         <StatCard
-          title="Safari Hii"
+          title="Safari Hii / This Trip"
           value={formatCurrency(collections?.trip_verified_total)}
           subtitle={`${collections?.trip_verified_count || 0} verified`}
           icon="🚌"
           color="blue"
         />
         <StatCard
-          title="Safari Hai"
+          title="Safari Hai / Active Trip"
           value={activeTrip ? (activeTrip.is_full ? 'IMEJAA' : 'Active') : 'None'}
           subtitle={activeTrip?.routes?.name}
           icon="🚐"
           color={activeTrip?.is_full ? 'red' : activeTrip ? 'green' : 'yellow'}
         />
         <StatCard
-          title="Gari Langu"
+          title="Gari Langu / My Vehicle"
           value={assignment?.vehicles?.plate_number || '—'}
           subtitle={assignment?.routes?.name}
           icon="✅"
@@ -97,7 +97,7 @@ export default function DriverDashboard() {
           }`}
         >
           <h3 className={`font-semibold ${activeTrip.is_full ? 'text-red-800' : 'text-green-800'}`}>
-            {activeTrip.is_full ? 'Gari Limejaa — Passengers notified' : 'Safari Inaendelea'}
+            {activeTrip.is_full ? 'Gari Limejaa — Passengers notified' : 'Safari Inaendelea / Trip in Progress'}
           </h3>
           <p className={`text-sm ${activeTrip.is_full ? 'text-red-700' : 'text-green-700'}`}>
             {activeTrip.vehicles?.plate_number} — {activeTrip.routes?.name}

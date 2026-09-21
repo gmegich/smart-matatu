@@ -156,7 +156,7 @@ export default function CompleteTrip() {
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="space-y-3 lg:col-span-2">
           <h3 className="font-semibold text-gray-800">Safari zako / Your trips</h3>
-          {pageLoading && <p className="text-sm text-gray-500">Inapakia...</p>}
+          {pageLoading && <p className="text-sm text-gray-500">Inapakia / Loading...</p>}
           {payments.map((p) => {
             const fb = getFeedback(p)
             const state = getTripState(p, fb)
@@ -181,17 +181,17 @@ export default function CompleteTrip() {
                   <p className="font-semibold text-gray-900">{p.routes?.name || 'Route'}</p>
                   {state === 'pending_verify' && (
                     <span className="shrink-0 rounded bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">
-                      Subiri
+                      Subiri / Wait
                     </span>
                   )}
                   {state === 'arrive' && (
                     <span className="shrink-0 rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-                      Maliza
+                      Maliza / Complete
                     </span>
                   )}
                   {state === 'feedback' && (
                     <span className="shrink-0 rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                      Maoni
+                      Maoni / Feedback
                     </span>
                   )}
                   {state === 'done' && (
@@ -210,9 +210,9 @@ export default function CompleteTrip() {
           })}
           {!pageLoading && payments.length === 0 && (
             <div className="rounded-xl border bg-white p-6 text-center text-sm text-gray-500">
-              <p>Hakuna safari bado.</p>
+              <p>Hakuna safari bado / No trips yet.</p>
               <Link to="/passenger/pay" className="mt-2 inline-block font-medium text-green-700 underline">
-                Lipa nauli kwanza →
+                Lipa nauli kwanza / Pay fare first →
               </Link>
             </div>
           )}
@@ -251,7 +251,7 @@ export default function CompleteTrip() {
                     dereva.
                   </p>
                   <Link to="/passenger/track" className="mt-4 inline-block text-sm text-green-700 underline">
-                    Fuatilia matatu →
+                    Fuatilia matatu / Track matatu →
                   </Link>
                 </div>
               )}
@@ -266,7 +266,7 @@ export default function CompleteTrip() {
                     }`}
                   >
                     <span className="text-lg">1</span>
-                    <p className="font-medium">Nimefika</p>
+                    <p className="font-medium">Nimefika / Arrived</p>
                   </div>
                   <div
                     className={`flex-1 rounded-lg border-2 p-3 text-center text-sm ${
@@ -276,22 +276,22 @@ export default function CompleteTrip() {
                     }`}
                   >
                     <span className="text-lg">2</span>
-                    <p className="font-medium">Kadiria & Maoni</p>
+                    <p className="font-medium">Kadiria & Maoni / Rate & Feedback</p>
                   </div>
                 </div>
               )}
 
               {action === 'arrive' && (
                 <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-5">
-                  <h4 className="font-semibold text-green-900">Umefika {selected.to_stage?.name}?</h4>
-                  <p className="mt-1 text-sm text-green-800">Bonyeza hapa ukishuka, kisha toa ukadiriaji.</p>
+                  <h4 className="font-semibold text-green-900">Umefika {selected.to_stage?.name}? / Have you arrived?</h4>
+                  <p className="mt-1 text-sm text-green-800">Bonyeza hapa ukishuka, kisha toa ukadiriaji / Tap when you alight, then rate.</p>
                   <button
                     type="button"
                     onClick={handleArrive}
                     disabled={loading}
                     className="mt-4 w-full rounded-lg bg-green-600 py-3.5 text-lg font-semibold text-white hover:bg-green-700 disabled:opacity-50"
                   >
-                    {loading ? 'Inahifadhi...' : '✓ Nimefika — Maliza Safari'}
+                    {loading ? 'Inahifadhi / Saving...' : '✓ Nimefika — Maliza Safari / Complete Trip'}
                   </button>
                 </div>
               )}
@@ -316,14 +316,14 @@ export default function CompleteTrip() {
                     className="mt-4 w-full rounded-lg bg-amber-500 py-3.5 font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
                   >
                     {loading
-                      ? 'Inatuma...'
+                      ? 'Inatuma / Sending...'
                       : action === 'arrive'
-                        ? '★ Tuma Ukadiriaji & Maliza Safari'
-                        : '★ Tuma Maoni'}
+                        ? '★ Tuma Ukadiriaji & Maliza Safari / Submit Rating & Complete'
+                        : '★ Tuma Maoni / Submit Feedback'}
                   </button>
                   {action === 'arrive' && (
                     <p className="mt-2 text-center text-xs text-gray-500">
-                      Kutuma ukadiriaji pia kutamaliza safari yako.
+                      Kutuma ukadiriaji pia kutamaliza safari yako / Submitting a rating also completes your trip.
                     </p>
                   )}
                 </div>

@@ -210,7 +210,7 @@ export default function DriverTrips() {
         )}
 
         <div className="rounded-xl border bg-white p-6 shadow-sm">
-          <h3 className="mb-4 font-semibold">Gari & Njia</h3>
+          <h3 className="mb-4 font-semibold">Gari & Njia / Vehicle & Route</h3>
           <p className="text-sm text-gray-600">
             Vehicle: <strong>{assignment?.vehicles?.plate_number || 'Not assigned'}</strong>
           </p>
@@ -223,7 +223,7 @@ export default function DriverTrips() {
               disabled={!!activeTrip}
               className="w-full rounded-lg border px-4 py-2.5"
             >
-              <option value="">Chagua njia...</option>
+              <option value="">Chagua njia / Select route...</option>
               {routes.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name}

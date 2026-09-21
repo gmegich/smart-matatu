@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 
 function normalizeLocation(row) {
@@ -27,30 +27,65 @@ export function useLiveVehicleLocations({
   const [locations, setLocations] = useState([])
   const [loading, setLoading] = useState(true)
   const [lastSync, setLastSync] = useState(null)
+  const realtimeOk = useRef(false)
+  const loadInFlight = useRef(false)
+
+  const idsKey = useMemo(
+    () => (vehicleIds?.length ? [...vehicleIds].sort().join(',') : ''),
+    [vehicleIds]
+  )
 
   const load = useCallback(async () => {
-    let ids = vehicleIds
+    if (loadInFlight.current) return
+    loadInFlight.current = true
 
-    if (vehicleId) {
-      ids = [vehicleId]
-    } else if (saccoId && activeTripsOnly) {
-      const { data: trips } = await supabase
-        .from('trips')
-        .select('vehicle_id, routes(name), profiles:driver_id(full_name)')
-        .eq('sacco_id', saccoId)
-        .eq('status', 'active')
+    try {
+      let ids = vehicleIds
 
-      const tripMap = {}
-      ;(trips || []).forEach((t) => {
-        if (t.vehicle_id) {
-          tripMap[t.vehicle_id] = {
-            route_name: t.routes?.name,
-            driver_name: t.profiles?.full_name,
+      if (vehicleId) {
+        ids = [vehicleId]
+      } else if (saccoId && activeTripsOnly) {
+        const { data: trips } = await supabase
+          .from('trips')
+          .select('vehicle_id, routes(name), profiles:driver_id(full_name)')
+          .eq('sacco_id', saccoId)
+          .eq('status', 'active')
+
+        const tripMap = {}
+        ;(trips || []).forEach((t) => {
+          if (t.vehicle_id) {
+            tripMap[t.vehicle_id] = {
+              route_name: t.routes?.name,
+              driver_name: t.profiles?.full_name,
+            }
           }
+        })
+        ids = Object.keys(tripMap)
+        if (!ids.length) {
+          setLocations([])
+          setLoading(false)
+          setLastSync(new Date())
+          return
         }
-      })
-      ids = Object.keys(tripMap)
-      if (!ids.length) {
+
+        const { data } = await supabase
+          .from('vehicle_locations')
+          .select('vehicle_id, latitude, longitude, updated_at, vehicles(plate_number)')
+          .in('vehicle_id', ids)
+
+        setLocations(
+          (data || []).map((row) => {
+            const base = normalizeLocation(row)
+            const extra = tripMap[row.vehicle_id] || {}
+            return { ...base, route_name: extra.route_name, driver_name: extra.driver_name }
+          })
+        )
+        setLoading(false)
+        setLastSync(new Date())
+        return
+      }
+
+      if (!ids?.length) {
         setLocations([])
         setLoading(false)
         setLastSync(new Date())
@@ -59,61 +94,55 @@ export function useLiveVehicleLocations({
 
       const { data } = await supabase
         .from('vehicle_locations')
-        .select('*, vehicles(plate_number)')
+        .select('vehicle_id, latitude, longitude, updated_at, vehicles(plate_number)')
         .in('vehicle_id', ids)
 
-      setLocations(
-        (data || []).map((row) => {
-          const base = normalizeLocation(row)
-          const extra = tripMap[row.vehicle_id] || {}
-          return { ...base, route_name: extra.route_name, driver_name: extra.driver_name }
-        })
-      )
+      setLocations((data || []).map(normalizeLocation).filter(Boolean))
       setLoading(false)
       setLastSync(new Date())
-      return
+    } finally {
+      loadInFlight.current = false
     }
-
-    if (!ids?.length) {
-      setLocations([])
-      setLoading(false)
-      setLastSync(new Date())
-      return
-    }
-
-    const { data } = await supabase
-      .from('vehicle_locations')
-      .select('*, vehicles(plate_number)')
-      .in('vehicle_id', ids)
-
-    setLocations((data || []).map(normalizeLocation).filter(Boolean))
-    setLoading(false)
-    setLastSync(new Date())
   }, [vehicleIds, vehicleId, saccoId, activeTripsOnly])
 
   useEffect(() => {
     setLoading(true)
+    realtimeOk.current = false
     load()
 
-    const channelName = `live-${vehicleId || saccoId || vehicleIds?.join('-') || 'all'}`
+    const channelName = `live-${vehicleId || saccoId || idsKey || 'all'}`
+    const filter = vehicleId
+      ? `vehicle_id=eq.${vehicleId}`
+      : undefined
+
     const channel = supabase
       .channel(channelName)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'vehicle_locations' },
+        {
+          event: '*',
+          schema: 'public',
+          table: 'vehicle_locations',
+          ...(filter ? { filter } : {}),
+        },
         () => {
           load()
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        realtimeOk.current = status === 'SUBSCRIBED'
+      })
 
-    const poll = setInterval(load, 10000)
+    // Poll only as fallback when Realtime isn't connected (every 15s instead of 10s)
+    const poll = setInterval(() => {
+      if (!realtimeOk.current) load()
+    }, 15000)
 
     return () => {
       supabase.removeChannel(channel)
       clearInterval(poll)
     }
-  }, [load])
+  }, [load, vehicleId, saccoId, idsKey])
 
   return { locations, loading, lastSync, refresh: load }
 }

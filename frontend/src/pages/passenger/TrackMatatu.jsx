@@ -82,7 +82,7 @@ export default function TrackMatatu() {
     runCheck()
     const interval = setInterval(runCheck, 30000)
     return () => clearInterval(interval)
-  }, [selectedPayment?.id, vehicleId, lastSync, selectedPayment?.status])
+  }, [selectedPayment?.id, vehicleId, selectedPayment?.status])
 
   const location = locations[0]
 

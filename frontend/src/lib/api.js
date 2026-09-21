@@ -8,6 +8,7 @@ const REFRESH_KEY = 'smart_matatu_refresh_token'
 const api = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 15000,
 })
 
 export function getStoredToken() {
@@ -123,6 +124,9 @@ export function isAuthError(err) {
 export function getApiErrorMessage(err) {
   if (!err.response) {
     const msg = err.message || ''
+    if (err.code === 'ECONNABORTED' || msg.toLowerCase().includes('timeout')) {
+      return 'Request timed out. Check your connection and try again.'
+    }
     if (
       err.code === 'ERR_NETWORK' ||
       msg.includes('Network Error') ||
@@ -250,6 +254,11 @@ export async function updatePassengerProfile(id, payload) {
 
 export async function fetchAdminSettings() {
   const { data } = await api.get('/admin/settings')
+  return data
+}
+
+export async function fetchAdminAnalytics() {
+  const { data } = await api.get('/admin/analytics')
   return data
 }
 

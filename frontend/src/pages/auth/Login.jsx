@@ -1,11 +1,16 @@
-import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { AUTH_ROLES, ROLE_HOME } from '../../lib/authRoles'
 import PasswordInput from '../../components/PasswordInput'
+import AuthLayout from '../../components/AuthLayout'
 
 export default function Login() {
-  const [role, setRole] = useState('passenger')
+  const [searchParams] = useSearchParams()
+  const roleFromUrl = searchParams.get('role')
+  const initialRole = AUTH_ROLES.some((r) => r.id === roleFromUrl) ? roleFromUrl : 'passenger'
+
+  const [role, setRole] = useState(initialRole)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -14,6 +19,12 @@ export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const resetMessage = location.state?.message
+
+  useEffect(() => {
+    if (roleFromUrl && AUTH_ROLES.some((r) => r.id === roleFromUrl)) {
+      setRole(roleFromUrl)
+    }
+  }, [roleFromUrl])
 
   const selectedRole = AUTH_ROLES.find((r) => r.id === role)
 
@@ -53,116 +64,101 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-700 via-green-800 to-red-800 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
-        <div className="mb-6 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl">
-            🚌
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Smart Matatu</h1>
-          <p className="text-sm text-gray-500">Nakuru Fare & Tracking System</p>
+    <AuthLayout title="Karibu tena / Welcome back" subtitle="Ingia kwenye akaunti yako / Sign in to your account">
+      <div className="mb-6">
+        <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 lg:text-left">
+          Chagua aina ya mtumiaji
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {AUTH_ROLES.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => {
+                setRole(r.id)
+                setError('')
+              }}
+              className={`rounded-xl border-2 p-2.5 text-center transition-all duration-150 ${
+                role === r.id
+                  ? 'border-emerald-500 bg-emerald-50 shadow-md shadow-emerald-500/10'
+                  : 'border-slate-200 bg-slate-50 hover:border-emerald-300 hover:bg-white'
+              }`}
+            >
+              <span className="text-2xl">{r.icon}</span>
+              <p className="mt-1 text-[11px] font-bold leading-tight text-slate-700">{r.label}</p>
+            </button>
+          ))}
         </div>
+        {selectedRole && (
+          <p className="mt-2.5 text-center text-xs text-slate-400 lg:text-left">{selectedRole.hint}</p>
+        )}
+      </div>
 
-        <div className="mb-6">
-          <p className="mb-2 text-center text-sm font-medium text-gray-700">
-            Chagua aina ya mtumiaji / Select user type
-          </p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {AUTH_ROLES.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => {
-                  setRole(r.id)
-                  setError('')
-                }}
-                className={`rounded-xl border-2 p-2.5 text-center transition ${
-                  role === r.id
-                    ? 'border-green-600 bg-green-50 shadow-sm'
-                    : 'border-gray-200 bg-white hover:border-green-300'
-                }`}
-              >
-                <span className="text-2xl">{r.icon}</span>
-                <p className="mt-1 text-[11px] font-semibold leading-tight text-gray-800">{r.label}</p>
-              </button>
-            ))}
-          </div>
-          {selectedRole && (
-            <p className="mt-2 text-center text-xs text-gray-500">{selectedRole.hint}</p>
-          )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {resetMessage && <div className="alert-success">{resetMessage}</div>}
+        {error && <div className="alert-error">{error}</div>}
+        <div>
+          <label className="label-field">Email</label>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="input-field"
+            placeholder="you@example.com"
+          />
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {resetMessage && (
-            <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700">{resetMessage}</div>
-          )}
-          {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>
-          )}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200"
-              placeholder="you@example.com"
-            />
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <label className="label-field mb-0">Password</label>
+            <Link to="/forgot-password" className="text-xs font-semibold text-emerald-600 hover:underline">
+              Sahau nenosiri? / Forgot?
+            </Link>
           </div>
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">Password</label>
-              <Link to="/forgot-password" className="text-xs font-semibold text-green-600 hover:underline">
-                Sahau nenosiri? / Forgot?
-              </Link>
-            </div>
-            <PasswordInput
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-green-600 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
-          >
-            {loading ? 'Inaingia...' : `Ingia / Login as ${selectedRole?.label}`}
-          </button>
-        </form>
+          <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} />
+        </div>
+        <button type="submit" disabled={loading} className="btn-primary w-full py-3">
+          {loading ? 'Inaingia / Signing in...' : `Ingia / Login as ${selectedRole?.label}`}
+        </button>
+      </form>
 
-        {role === 'passenger' ? (
-          <p className="mt-6 text-center text-sm text-gray-600">
+      {role === 'passenger' ? (
+        <div className="mt-6 space-y-2 text-center text-sm text-slate-500">
+          <p>
             Mtu mpya?{' '}
-            <Link to="/register" className="font-semibold text-green-600 hover:underline">
+            <Link to="/register" className="font-semibold text-emerald-600 hover:text-emerald-700 hover:underline">
               Jisajili / Register
             </Link>
           </p>
-        ) : role === 'owner' ? (
-          <p className="mt-6 text-center text-xs text-gray-500">
-            Akaunti za mmiliki huundwa na admin. / Owner accounts are created by admin.
+          <Link to="/scan" className="block text-xs font-semibold text-emerald-600 hover:underline">
+            📷 Scan QR to access / Scan kuingia
+          </Link>
+        </div>
+      ) : role === 'owner' ? (
+        <div className="mt-6 space-y-2 text-center text-xs text-slate-400">
+          <p>Akaunti za mmiliki huundwa na admin. / Owner accounts are created by admin.</p>
+          <Link to="/scan" className="block font-semibold text-emerald-600 hover:underline">
+            📷 Scan QR to access
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-6 space-y-2 text-center text-xs text-slate-400">
+          <p>
+            Mtu mpya?{' '}
+            <Link to="/register" className="font-semibold text-emerald-600 hover:underline">
+              Jisajili / Register
+            </Link>
           </p>
-        ) : (
-          <div className="mt-6 space-y-2 text-center text-xs text-gray-500">
-            <p>
-              Mtu mpya?{' '}
-              <Link to="/register" className="font-semibold text-green-600 hover:underline">
-                Jisajili / Register
-              </Link>
-            </p>
-            {selectedRole?.demo && (
-              <button
-                type="button"
-                onClick={fillDemo}
-                className="font-semibold text-green-600 hover:underline"
-              >
-                Tumia demo / Use demo account
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+          {selectedRole?.demo && (
+            <button type="button" onClick={fillDemo} className="font-semibold text-emerald-600 hover:underline">
+              Tumia demo / Use demo account
+            </button>
+          )}
+          <Link to="/scan" className="block font-semibold text-emerald-600 hover:underline">
+            📷 Scan QR to access
+          </Link>
+        </div>
+      )}
+    </AuthLayout>
   )
 }

@@ -34,10 +34,10 @@ export default function OwnerEarnings() {
         <table className="w-full text-left text-sm">
           <thead className="border-b bg-gray-50">
             <tr>
-              <th className="p-4">Tarehe</th>
-              <th className="p-4">Gari</th>
-              <th className="p-4">Jumla</th>
-              <th className="p-4">Sehemu Yako</th>
+              <th className="p-4">Tarehe / Date</th>
+              <th className="p-4">Gari / Vehicle</th>
+              <th className="p-4">Jumla / Total</th>
+              <th className="p-4">Sehemu Yako / Your Share</th>
               <th className="p-4">SACCO</th>
             </tr>
           </thead>
@@ -54,7 +54,7 @@ export default function OwnerEarnings() {
           </tbody>
         </table>
         {loading ? (
-          <p className="p-8 text-center text-gray-500">Inapakia...</p>
+          <p className="p-8 text-center text-gray-500">Inapakia / Loading...</p>
         ) : (
           earnings.length === 0 && (
             <p className="p-8 text-center text-gray-500">

@@ -6,6 +6,7 @@ import PhoneContact from '../../components/PhoneContact'
 import { supabase, formatCurrency } from '../../lib/supabase'
 import { createPayment, fetchMyWallet, fetchOpenTrip, getApiErrorMessage } from '../../lib/api'
 import { useAuth } from '../../context/AuthContext'
+import { encodePaymentQr } from '../../lib/qrPayload'
 
 export default function PayFare() {
   const { user, loading: authLoading } = useAuth()
@@ -251,7 +252,7 @@ export default function PayFare() {
               disabled={loading || !canPay}
               className="w-full rounded-lg bg-green-600 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
             >
-              {loading ? 'Inalipa...' : 'Lipa Sasa / Pay Now'}
+              {loading ? 'Inalipa / Paying...' : 'Lipa Sasa / Pay Now'}
             </button>
 
             {openTrip && (
@@ -271,7 +272,7 @@ export default function PayFare() {
             <p className="text-gray-600">Payment successful — show this to the driver</p>
 
             <div className="my-6 flex justify-center">
-              <QRCodeSVG value={payment.payment_code} size={180} />
+              <QRCodeSVG value={encodePaymentQr(payment.payment_code)} size={180} level="M" />
             </div>
 
             <div className="rounded-lg bg-gray-50 p-4">

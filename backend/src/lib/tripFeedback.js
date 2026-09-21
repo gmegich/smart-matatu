@@ -115,6 +115,7 @@ async function passengerNeedsAction(passengerId) {
     .eq('passenger_id', passengerId)
     .eq('status', 'completed')
     .order('created_at', { ascending: false })
+    .limit(20)
 
   if (compErr) {
     if (compErr.message?.includes('trip_ratings')) {

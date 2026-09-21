@@ -33,21 +33,22 @@ router.get('/active-trip', async (req, res) => {
 router.get('/collections', async (req, res) => {
   const today = new Date().toISOString().split('T')[0]
 
-  const { data: todayPayments, error: todayError } = await supabaseAdmin
-    .from('payments')
-    .select('amount')
-    .eq('verified_by', req.user.id)
-    .eq('status', 'verified')
-    .gte('verified_at', `${today}T00:00:00`)
+  const [{ data: todayPayments, error: todayError }, { data: trip }] = await Promise.all([
+    supabaseAdmin
+      .from('payments')
+      .select('amount')
+      .eq('verified_by', req.user.id)
+      .eq('status', 'verified')
+      .gte('verified_at', `${today}T00:00:00`),
+    supabaseAdmin
+      .from('trips')
+      .select('id, is_full, vehicles(plate_number, capacity)')
+      .eq('driver_id', req.user.id)
+      .eq('status', 'active')
+      .maybeSingle(),
+  ])
 
   if (todayError) return res.status(400).json({ error: todayError.message })
-
-  const { data: trip } = await supabaseAdmin
-    .from('trips')
-    .select('id, is_full, vehicles(plate_number, capacity)')
-    .eq('driver_id', req.user.id)
-    .eq('status', 'active')
-    .maybeSingle()
 
   let tripPayments = []
   if (trip?.id) {

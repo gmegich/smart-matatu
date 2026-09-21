@@ -30,53 +30,57 @@ export default function PassengerDashboard() {
     const loadFullTrips = () => {
       supabase
         .from('trips')
-        .select('*, routes(name), vehicles(plate_number)')
+        .select('id, routes(name), vehicles(plate_number)')
         .eq('status', 'active')
         .eq('is_full', true)
         .then(({ data }) => setFullTrips(data || []))
     }
 
-    const loadTripsToComplete = async () => {
-      try {
-        const data = await fetchMyPayments()
-        const count = (data || []).filter(needsAction).length
-        setTripsToComplete(count)
-      } catch {
+    const load = async () => {
+      const [walletResult, paymentsResult] = await Promise.allSettled([
+        fetchMyWallet(),
+        fetchMyPayments(),
+      ])
+
+      if (walletResult.status === 'fulfilled') setWallet(walletResult.value)
+      else setWallet(null)
+
+      if (paymentsResult.status === 'fulfilled') {
+        const data = paymentsResult.value || []
+        setRecentPayments(data.slice(0, 5))
+        setTripsToComplete(data.filter(needsAction).length)
+      } else {
+        setRecentPayments([])
         setTripsToComplete(0)
       }
-    }
 
-    const load = async () => {
-      try {
-        const w = await fetchMyWallet()
-        setWallet(w)
-      } catch {
-        setWallet(null)
-      }
-
-      const { data: payments } = await supabase
-        .from('payments')
-        .select('*, routes(name)')
-        .order('created_at', { ascending: false })
-        .limit(5)
-      setRecentPayments(payments || [])
       loadFullTrips()
-      loadTripsToComplete()
     }
 
     load()
 
     const channel = supabase
       .channel('passenger-dashboard')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'trips' }, loadFullTrips)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, loadTripsToComplete)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'trips', filter: 'status=eq.active' },
+        loadFullTrips
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => {
+        fetchMyPayments()
+          .then((data) => {
+            setRecentPayments((data || []).slice(0, 5))
+            setTripsToComplete((data || []).filter(needsAction).length)
+          })
+          .catch(() => {})
+      })
       .subscribe()
 
     return () => supabase.removeChannel(channel)
   }, [])
 
   return (
-    <Layout title={`Karibu, ${profile?.full_name}`}>
+    <Layout title={`Karibu / Welcome, ${profile?.full_name}`}>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Salio la Mkoba / Wallet"
@@ -85,49 +89,44 @@ export default function PassengerDashboard() {
           color="green"
         />
         <StatCard
-          title="Malipo ya Hivi Karibuni"
+          title="Malipo ya Hivi Karibuni / Recent Payments"
           value={recentPayments.length}
           subtitle="Recent payments"
           icon="💳"
           color="blue"
         />
-        <StatCard title="Huduma" value="Nakuru" subtitle="Matatu tracking" icon="🚌" color="red" />
+        <StatCard title="Huduma / Service" value="Nakuru" subtitle="Matatu tracking" icon="🚌" color="red" />
       </div>
 
       {tripsToComplete > 0 && (
-        <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
-          <h3 className="font-semibold text-amber-900">Maliza Safari / Complete your trip</h3>
-          <p className="mt-1 text-sm text-amber-800">
+        <div className="alert-warning mt-6">
+          <h3 className="font-bold text-amber-900">Maliza Safari / Complete your trip</h3>
+          <p className="mt-1 text-sm text-amber-800/90">
             Una safari {tripsToComplete} inahitaji hatua — maliza na toa maoni kabla ya kulipa nyingine.
           </p>
-          <Link
-            to="/passenger/complete-trip"
-            className="mt-3 inline-block rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-600"
-          >
+          <Link to="/passenger/complete-trip" className="btn-primary mt-4 inline-flex text-sm">
             Maliza Safari sasa →
           </Link>
         </div>
       )}
 
       {fullTrips.length > 0 && (
-        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-5 shadow-sm">
-          <h3 className="font-semibold text-red-800">Matatu Zimejaa / Cars Full</h3>
-          <p className="mt-1 text-sm text-red-700">
+        <div className="mt-6 rounded-2xl border border-red-200 bg-gradient-to-br from-red-50 to-white p-5 shadow-sm">
+          <h3 className="font-bold text-red-800">Matatu Zimejaa / Cars Full</h3>
+          <p className="mt-1 text-sm text-red-700/90">
             Dereva ameweka alama kuwa gari limejaa — usilipe kwa matatu hizi:
           </p>
           <ul className="mt-3 space-y-2">
             {fullTrips.map((t) => (
-              <li key={t.id} className="flex items-center justify-between text-sm">
+              <li key={t.id} className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2 text-sm">
                 <span>
                   <strong>{t.vehicles?.plate_number}</strong> — {t.routes?.name}
                 </span>
-                <span className="rounded bg-red-200 px-2 py-0.5 text-xs font-semibold text-red-900">
-                  IMEJAA
-                </span>
+                <span className="badge bg-red-200 text-red-900">IMEJAA</span>
               </li>
             ))}
           </ul>
-          <Link to="/passenger/pay" className="mt-3 inline-block text-sm font-medium text-red-800 underline">
+          <Link to="/passenger/pay" className="mt-3 inline-block text-sm font-semibold text-red-700 hover:underline">
             Nenda kulipa nauli →
           </Link>
         </div>
@@ -135,38 +134,39 @@ export default function PassengerDashboard() {
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { to: '/passenger/pay', label: 'Lipa Nauli', desc: 'Pay fare before boarding', icon: '💳' },
-          { to: '/passenger/complete-trip', label: 'Maliza Safari', desc: 'Complete trip & give feedback', icon: '💬' },
-          { to: '/passenger/track', label: 'Fuatilia Matatu', desc: 'Live GPS on the map', icon: '📍' },
-          { to: '/passenger/wallet', label: 'Mkoba', desc: 'Top up & transactions', icon: '👛' },
+          { to: '/passenger/pay', label: 'Lipa Nauli / Pay Fare', desc: 'Pay fare before boarding', icon: '💳' },
+          { to: '/passenger/complete-trip', label: 'Maliza Safari / Complete', desc: 'Complete trip & give feedback', icon: '💬' },
+          { to: '/passenger/track', label: 'Fuatilia Matatu / Track', desc: 'Live GPS on the map', icon: '📍' },
+          { to: '/passenger/wallet', label: 'Mkoba / Wallet', desc: 'Top up & transactions', icon: '👛' },
         ].map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-            className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-green-300 hover:shadow-md"
-          >
+          <Link key={item.to} to={item.to} className="card card-hover block p-5">
             <span className="text-3xl">{item.icon}</span>
-            <h3 className="mt-2 font-semibold text-gray-800">{item.label}</h3>
-            <p className="text-sm text-gray-500">{item.desc}</p>
+            <h3 className="mt-3 font-bold text-slate-800">{item.label}</h3>
+            <p className="mt-0.5 text-sm text-slate-400">{item.desc}</p>
           </Link>
         ))}
       </div>
 
       {recentPayments.length > 0 && (
-        <div className="mt-8 rounded-xl border bg-white p-6 shadow-sm">
-          <h3 className="mb-4 font-semibold text-gray-800">Malipo ya Hivi Karibuni</h3>
-          <div className="space-y-3">
+        <div className="card mt-8 p-6">
+          <h3 className="mb-4 font-bold text-slate-800">Malipo ya Hivi Karibuni</h3>
+          <div className="space-y-1">
             {recentPayments.map((p) => (
-              <div key={p.id} className="flex items-center justify-between border-b pb-3 last:border-0">
+              <div
+                key={p.id}
+                className="flex items-center justify-between rounded-lg px-2 py-3 transition hover:bg-slate-50"
+              >
                 <div>
-                  <p className="font-medium">{p.routes?.name}</p>
-                  <p className="text-xs text-gray-500">Code: {p.payment_code}</p>
+                  <p className="font-semibold text-slate-800">{p.routes?.name}</p>
+                  <p className="text-xs text-slate-400">Code: {p.payment_code}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-green-700">{formatCurrency(p.amount)}</p>
+                  <p className="font-bold text-emerald-600">{formatCurrency(p.amount)}</p>
                   <span
-                    className={`text-xs capitalize ${
-                      p.status === 'verified' ? 'text-green-600' : 'text-yellow-600'
+                    className={`badge ${
+                      p.status === 'verified' || p.status === 'completed'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-amber-100 text-amber-700'
                     }`}
                   >
                     {p.status}

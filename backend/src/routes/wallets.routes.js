@@ -20,9 +20,10 @@ router.get('/transactions', authenticate, loadProfile, async (req, res) => {
 
     const { data, error } = await supabaseAdmin
       .from('wallet_transactions')
-      .select('*')
+      .select('id, type, amount, balance_after, description, created_at')
       .eq('wallet_id', wallet.id)
       .order('created_at', { ascending: false })
+      .limit(50)
 
     if (error) return res.status(400).json({ error: error.message })
     res.json(data)

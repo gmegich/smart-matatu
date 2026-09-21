@@ -12,7 +12,8 @@ import {
 } from 'recharts'
 import Layout from '../../components/Layout'
 import StatCard from '../../components/StatCard'
-import { supabase, formatCurrency } from '../../lib/supabase'
+import { formatCurrency } from '../../lib/supabase'
+import { fetchAdminAnalytics } from '../../lib/api'
 import { useAuth } from '../../context/AuthContext'
 
 export default function AdminDashboard() {
@@ -22,80 +23,72 @@ export default function AdminDashboard() {
   const [dailyRevenue, setDailyRevenue] = useState([])
 
   useEffect(() => {
-    const load = async () => {
-      const saccoId = profile.sacco_id
+    if (!profile?.sacco_id) return
+    let cancelled = false
 
-      const [
-        { count: vehicles },
-        { count: drivers },
-        { count: activeTrips },
-        { data: payments },
-      ] = await Promise.all([
-        supabase.from('vehicles').select('*', { count: 'exact', head: true }).eq('sacco_id', saccoId),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('sacco_id', saccoId).eq('role', 'driver'),
-        supabase.from('trips').select('*', { count: 'exact', head: true }).eq('sacco_id', saccoId).eq('status', 'active'),
-        supabase.from('payments').select('amount, route_id, created_at, routes(name)').eq('sacco_id', saccoId).eq('status', 'verified'),
-      ])
-
-      const totalRevenue = (payments || []).reduce((s, p) => s + Number(p.amount), 0)
-
-      setStats({ vehicles, drivers, activeTrips, totalRevenue })
-
-      const byRoute = {}
-      ;(payments || []).forEach((p) => {
-        const name = p.routes?.name || 'Unknown'
-        byRoute[name] = (byRoute[name] || 0) + Number(p.amount)
+    fetchAdminAnalytics()
+      .then((data) => {
+        if (cancelled) return
+        setStats({
+          vehicles: data.vehicles || 0,
+          drivers: data.drivers || 0,
+          activeTrips: data.activeTrips || 0,
+          totalRevenue: data.totalRevenue || 0,
+        })
+        setRevenueByRoute(data.revenueByRoute || [])
+        setDailyRevenue(data.dailyRevenue || [])
       })
-      setRevenueByRoute(Object.entries(byRoute).map(([name, revenue]) => ({ name, revenue })))
-
-      const byDay = {}
-      ;(payments || []).forEach((p) => {
-        const day = new Date(p.created_at).toLocaleDateString('en-KE', { weekday: 'short' })
-        byDay[day] = (byDay[day] || 0) + Number(p.amount)
+      .catch(() => {
+        if (!cancelled) {
+          setStats({})
+          setRevenueByRoute([])
+          setDailyRevenue([])
+        }
       })
-      setDailyRevenue(Object.entries(byDay).map(([day, revenue]) => ({ day, revenue })))
+
+    return () => {
+      cancelled = true
     }
-    if (profile?.sacco_id) load()
-  }, [profile])
+  }, [profile?.sacco_id])
 
   return (
-    <Layout title="Admin Dashboard">
+    <Layout title="Dashibodi ya Admin / Admin Dashboard">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Magari" value={stats.vehicles || 0} icon="🚌" color="green" />
-        <StatCard title="Madereva" value={stats.drivers || 0} icon="👤" color="blue" />
-        <StatCard title="Safari Hai" value={stats.activeTrips || 0} icon="📍" color="red" />
+        <StatCard title="Magari / Vehicles" value={stats.vehicles || 0} icon="🚌" color="green" />
+        <StatCard title="Madereva / Drivers" value={stats.drivers || 0} icon="👤" color="blue" />
+        <StatCard title="Safari Hai / Active Trips" value={stats.activeTrips || 0} icon="📍" color="red" />
         <StatCard
-          title="Mapato"
+          title="Mapato / Revenue"
           value={formatCurrency(stats.totalRevenue)}
-          subtitle="Verified payments"
+          subtitle="Verified (last 30 days)"
           icon="💰"
           color="yellow"
         />
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border bg-white p-6 shadow-sm">
-          <h3 className="mb-4 font-semibold">Mapato kwa Njia / Revenue by Route</h3>
+        <div className="card p-6">
+          <h3 className="mb-4 font-bold text-slate-800">Mapato kwa Njia / Revenue by Route</h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={revenueByRoute}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-              <YAxis />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} />
+              <YAxis tick={{ fill: '#64748b' }} />
               <Tooltip formatter={(v) => formatCurrency(v)} />
-              <Bar dataKey="revenue" fill="#16a34a" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="revenue" fill="#059669" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="rounded-xl border bg-white p-6 shadow-sm">
-          <h3 className="mb-4 font-semibold">Mapato kwa Siku / Daily Revenue</h3>
+        <div className="card p-6">
+          <h3 className="mb-4 font-bold text-slate-800">Mapato kwa Siku / Daily Revenue</h3>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={dailyRevenue}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="day" />
-              <YAxis />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="day" tick={{ fill: '#64748b' }} />
+              <YAxis tick={{ fill: '#64748b' }} />
               <Tooltip formatter={(v) => formatCurrency(v)} />
-              <Line type="monotone" dataKey="revenue" stroke="#dc2626" strokeWidth={2} />
+              <Line type="monotone" dataKey="revenue" stroke="#dc2626" strokeWidth={2.5} dot={{ fill: '#dc2626', r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

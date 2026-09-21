@@ -23,10 +23,10 @@ export default function OwnerDashboard() {
   return (
     <Layout title={`Mmiliki / Owner — ${profile?.full_name}`}>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Magari Yangu" value={vehicles.length} icon="🚌" color="green" />
-        <StatCard title="Jumla Mapato" value={formatCurrency(stats?.totalEarnings || 0)} icon="💰" color="blue" />
-        <StatCard title="Safari Zote" value={stats?.totalTrips || 0} icon="📍" color="red" />
-        <StatCard title="Safari Hai" value={stats?.activeTrips || 0} icon="🟢" color="yellow" />
+        <StatCard title="Magari Yangu / My Vehicles" value={vehicles.length} icon="🚌" color="green" />
+        <StatCard title="Jumla Mapato / Total Earnings" value={formatCurrency(stats?.totalEarnings || 0)} icon="💰" color="blue" />
+        <StatCard title="Safari Zote / All Trips" value={stats?.totalTrips || 0} icon="📍" color="red" />
+        <StatCard title="Safari Hai / Active Trips" value={stats?.activeTrips || 0} icon="🟢" color="yellow" />
       </div>
 
       <div className="mt-8">
@@ -38,11 +38,11 @@ export default function OwnerDashboard() {
         </div>
 
         {loading ? (
-          <p className="text-gray-500">Inapakia...</p>
+          <p className="text-gray-500">Inapakia / Loading...</p>
         ) : vehicles.length === 0 ? (
           <div className="rounded-xl border bg-white p-8 text-center text-gray-500">
-            <p>Huna magari yaliyosajiliwa bado.</p>
-            <p className="mt-1 text-sm">Admin lazima akusajili kama mmiliki na akugawie gari.</p>
+            <p>Huna magari yaliyosajiliwa bado / No vehicles registered yet.</p>
+            <p className="mt-1 text-sm">Admin lazima akusajili kama mmiliki na akugawie gari / An admin must register you as owner and assign a vehicle.</p>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
@@ -68,7 +68,7 @@ export default function OwnerDashboard() {
                     <p className="font-bold text-green-800">{formatCurrency(v.earnings)}</p>
                   </div>
                   <div className="rounded-lg bg-blue-50 p-3">
-                    <p className="text-gray-500">Safari</p>
+                    <p className="text-gray-500">Safari / Trips</p>
                     <p className="font-bold text-blue-800">{v.tripCount}</p>
                   </div>
                 </div>

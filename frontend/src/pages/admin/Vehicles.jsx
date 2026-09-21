@@ -181,7 +181,7 @@ export default function AdminVehicles() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <form onSubmit={handleAddVehicle} className="space-y-3 rounded-xl border bg-white p-6 shadow-sm">
-          <h3 className="font-semibold">Ongeza Gari</h3>
+          <h3 className="font-semibold">Ongeza Gari / Add Vehicle</h3>
           <input placeholder="Plate number" value={form.plate_number} onChange={(e) => setForm({ ...form, plate_number: e.target.value.toUpperCase() })} className="w-full rounded-lg border px-4 py-2" required />
           <input type="number" placeholder="Capacity" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} className="w-full rounded-lg border px-4 py-2" />
           <select value={form.owner_id} onChange={(e) => setForm({ ...form, owner_id: e.target.value })} className="w-full rounded-lg border px-4 py-2">

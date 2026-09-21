@@ -20,7 +20,7 @@ export const AUTH_ROLES = [
   },
   {
     id: 'admin',
-    label: 'Admin',
+    label: 'Admin / Msimamizi',
     icon: '⚙️',
     hint: 'Manage routes, vehicles, users',
     demo: { email: 'admin@nakuru.com', password: 'pass123' },

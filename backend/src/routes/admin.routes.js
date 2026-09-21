@@ -208,16 +208,24 @@ router.post('/assignments', async (req, res) => {
 router.get('/analytics', async (req, res) => {
   const saccoId = req.profile.sacco_id
 
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+
   const [
     { count: vehicles },
     { count: drivers },
     { count: activeTrips },
     { data: payments },
   ] = await Promise.all([
-    supabaseAdmin.from('vehicles').select('*', { count: 'exact', head: true }).eq('sacco_id', saccoId),
-    supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('sacco_id', saccoId).eq('role', 'driver'),
-    supabaseAdmin.from('trips').select('*', { count: 'exact', head: true }).eq('sacco_id', saccoId).eq('status', 'active'),
-    supabaseAdmin.from('payments').select('amount, route_id, created_at, routes(name)').eq('sacco_id', saccoId).eq('status', 'verified'),
+    supabaseAdmin.from('vehicles').select('id', { count: 'exact', head: true }).eq('sacco_id', saccoId),
+    supabaseAdmin.from('profiles').select('id', { count: 'exact', head: true }).eq('sacco_id', saccoId).eq('role', 'driver'),
+    supabaseAdmin.from('trips').select('id', { count: 'exact', head: true }).eq('sacco_id', saccoId).eq('status', 'active'),
+    supabaseAdmin
+      .from('payments')
+      .select('amount, route_id, created_at, routes(name)')
+      .eq('sacco_id', saccoId)
+      .eq('status', 'verified')
+      .gte('created_at', thirtyDaysAgo)
+      .limit(2000),
   ])
 
   const totalRevenue = (payments || []).reduce((s, p) => s + Number(p.amount), 0)

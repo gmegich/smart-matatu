@@ -29,13 +29,13 @@ export default function TripHistory() {
           <table className="w-full text-left text-sm">
             <thead className="border-b bg-gray-50">
               <tr>
-                <th className="p-4 font-semibold">Tarehe</th>
-                <th className="p-4 font-semibold">Njia</th>
-                <th className="p-4 font-semibold">Kutoka → Kwenda</th>
+                <th className="p-4 font-semibold">Tarehe / Date</th>
+                <th className="p-4 font-semibold">Njia / Route</th>
+                <th className="p-4 font-semibold">Kutoka → Kwenda / From → To</th>
                 <th className="p-4 font-semibold">Matatu</th>
-                <th className="p-4 font-semibold">Nauli</th>
-                <th className="p-4 font-semibold">Ukadiriaji</th>
-                <th className="p-4 font-semibold">Hali</th>
+                <th className="p-4 font-semibold">Nauli / Fare</th>
+                <th className="p-4 font-semibold">Ukadiriaji / Rating</th>
+                <th className="p-4 font-semibold">Hali / Status</th>
               </tr>
             </thead>
             <tbody className="divide-y">
